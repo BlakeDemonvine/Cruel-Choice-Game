@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cruel Choice Game</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/particles.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Orbitron', sans-serif;
+      overflow: hidden;
+      background: black;
+      color: white;
+    }
+
+    #particles-js {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
+
+    #game {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+
+    #start-screen {
+      animation: fadeIn 1.5s ease-in-out;
+    }
+
+    h1 {
+      font-size: 3em;
+      text-shadow: 0 0 20px #00d4ff, 0 0 30px #00d4ff;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 15px 30px;
+      font-size: 1.5em;
+      color: white;
+      background: linear-gradient(45deg, #00d4ff, #005377);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 0 20px #00d4ff;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 30px #00d4ff;
+    }
+
+    #question-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      width: 100%;
+      height: 100%;
+      position: relative;
+      padding-top: 20px;
+    }
+
+    #question {
+      font-size: 2em;
+      margin-bottom: 5px; 
+      text-shadow: 0 0 10px #ff6e7f;
+    }
+
+    .choices {
+      display: flex;
+      width: 100%;
+      margin-bottom: 5px;
+    }
+
+    .choice {
+      width: 50%;
+      height: 750px; 
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 2em;
+      color: black;
+      background: linear-gradient(135deg, #ff6e7f, #bfe9ff);
+      cursor: pointer;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .choice:hover {
+      filter: brightness(1.2);
+    }
+
+    .votes {
+      position: absolute;
+      bottom: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .vote {
+      width: 30px;
+      height: 30px;
+      background: white;
+      color: black;
+      font-size: 1em;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #fff;
+    }
+
+    #result {
+      font-size: 2em;
+      color: white;
+      margin-top: 20px;
+      text-shadow: 0 0 15px #ff6e7f;
+    }
+
+    #scores {
+      margin-top: 10px;
+      font-size: 1.2em;
+    }
+
+    #player-choices {
+      margin-top: 10px;
+      font-size: 1em;
+      color: #ff6e7f;
+    }
+
+    #next-button {
+      display: none;
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 1.5em;
+      background: #ff6e7f;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    #next-button:hover {
+      background: #bfe9ff;
+      color: black;
+    }
+
+    @keyframes fadeIn {
+      0% { opacity: 0; transform: scale(0.8); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div id="particles-js"></div>
+  <div id="game">
+    <div id="start-screen">
+      <h1>Cruel Choice Game</h1>
+      <p>請輸入遊玩人數：</p>
+      <input type="number" id="player-count" min="2" placeholder="2人以上" required>
+      <br>
+      <button id="start-button">開始遊戲</button>
+    </div>
+
+    <div id="question-screen">
+      <div id="question"></div>
+      <div class="choices">
+        <div class="choice" id="choice-left">
+          <div class="votes" id="votes-left"></div>
+        </div>
+        <div class="choice" id="choice-right">
+          <div class="votes" id="votes-right"></div>
+        </div>
+      </div>
+      <div id="result"></div>
+      <button id="next-button">Next</button>
+      <div id="scores"></div>
+      <div id="player-choices"></div> <!-- 新增區域 -->
+    </div>
+  </div>
+
+  <script>
+    particlesJS.load('particles-js', 'https://cdn.jsdelivr.net/gh/VincentGarreau/particles.js/particles.json', function() {
+      console.log('particles.js loaded!');
+    });
+
+    const startScreen = document.getElementById("start-screen");
+    const questionScreen = document.getElementById("question-screen");
+    const playerCountInput = document.getElementById("player-count");
+    const startButton = document.getElementById("start-button");
+    const leftChoice = document.getElementById("choice-left");
+    const rightChoice = document.getElementById("choice-right");
+    const votesLeft = document.getElementById("votes-left");
+    const votesRight = document.getElementById("votes-right");
+    const question = document.getElementById("question");
+    const result = document.getElementById("result");
+    const nextButton = document.getElementById("next-button");
+    const scoresDiv = document.getElementById("scores");
+    const playerChoicesDiv = document.getElementById("player-choices"); // 新增區域引用
+
+    let players = [];
+    let scores = [];
+    let currentQuestion = 0;
+    let playerVotes = [];
+
+    let questions = [
+      { question: "你選擇更愛父母還是朋友?", left: "父母", right: "朋友" },
+      { question: "你寧可選擇有錢還是有愛?", left: "有錢", right: "有愛" },
+      { question: "要力量還是智慧?", left: "力量", right: "智慧" },
+    ];
+
+    const shuffleQuestions = () => {
+      for (let i = questions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [questions[i], questions[j]] = [questions[j], questions[i]];
+      }
+    };
+
+    startButton.addEventListener("click", () => {
+      const playerCount = parseInt(playerCountInput.value);
+      if (playerCount >= 2) {
+        players = Array.from({ length: playerCount }, (_, i) => i + 1);
+        scores = Array(playerCount).fill(0);
+        shuffleQuestions();
+        startScreen.style.display = "none";
+        questionScreen.style.display = "flex";
+        loadQuestion();
+      } else {
+        alert("請至少輸入2人以上！");
+      }
+    });
+
+    const loadQuestion = () => {
+      if (currentQuestion < questions.length) {
+        const q = questions[currentQuestion];
+        question.textContent = q.question;
+        leftChoice.textContent = q.left;
+        rightChoice.textContent = q.right;
+        votesLeft.innerHTML = "";
+        votesRight.innerHTML = "";
+        playerChoicesDiv.innerHTML = ""; // 清空選擇區域
+        gsap.fromTo(".choice", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.5 });
+        playerVotes = [];
+        result.style.display = "none";
+        nextButton.style.display = "none";
+        updateScores();
+      } else {
+        alert("遊戲結束！");
+        location.reload();
+      }
+    };
+
+    const calculateResult = () => {
+      const leftVotes = playerVotes.filter(v => v.choice === "left").length;
+      const rightVotes = playerVotes.filter(v => v.choice === "right").length;
+
+      if (leftVotes > rightVotes) {
+        result.textContent = "左邊勝利！";
+        playerVotes.forEach(v => {
+          if (v.choice === "left") scores[v.player - 1] += 1;
+        });
+      } else if (rightVotes > leftVotes) {
+        result.textContent = "右邊勝利！";
+        playerVotes.forEach(v => {
+          if (v.choice === "right") scores[v.player - 1] += 1;
+        });
+      } else {
+        result.textContent = "平手！";
+      }
+
+      result.style.display = "block";
+      nextButton.style.display = "block";
+      gsap.fromTo("#result", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.5 });
+      updateScores();
+    };
+
+    const updateScores = () =>
+      scoresDiv.innerHTML = players.map((p, i) => `玩家${p}: ${scores[i]} 分`).join(" | ");
+
+    const updatePlayerChoices = () => {
+      playerChoicesDiv.innerHTML = playerVotes
+        .map(v => `玩家${v.player}: ${v.choice === "left" ? leftChoice.textContent : rightChoice.textContent}`)
+        .join("<br>");
+    };
+
+    const addVoteSticker = (player, choice) => {
+      const vote = document.createElement("div");
+      vote.classList.add("vote");
+      vote.textContent = player;
+      if (choice === "left") {
+        votesLeft.appendChild(vote);
+      } else {
+        votesRight.appendChild(vote);
+      }
+    };
+
+    leftChoice.addEventListener("click", () => {
+      if (playerVotes.length < players.length) {
+        const player = players[playerVotes.length];
+        playerVotes.push({ player, choice: "left" });
+        addVoteSticker(player, "left");
+        updatePlayerChoices(); // 更新玩家選擇
+        if (playerVotes.length === players.length) calculateResult();
+      }
+    });
+
+    rightChoice.addEventListener("click", () => {
+      if (playerVotes.length < players.length) {
+        const player = players[playerVotes.length];
+        playerVotes.push({ player, choice: "right" });
+        addVoteSticker(player, "right");
+        updatePlayerChoices(); // 更新玩家選擇
+        if (playerVotes.length === players.length) calculateResult();
+      }
+    });
+
+    nextButton.addEventListener("click", () => {
+      currentQuestion++;
+      loadQuestion();
+    });
+  </script>
+</body>
+</html>

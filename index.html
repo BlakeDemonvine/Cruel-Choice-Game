@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Cruel Choice Game</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/particles.js"></script>
@@ -30,7 +30,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      height: 100%; /* Changed to be dynamically controlled */
       text-align: center;
     }
 
@@ -189,7 +189,7 @@
       </div>
       <div id="result"></div>
       <button id="next-button">Next</button>
-      <div id="player-choices"></div> <!-- 新增區域 -->
+      <div id="player-choices"></div>
     </div>
   </div>
 
@@ -210,7 +210,16 @@
     const result = document.getElementById("result");
     const nextButton = document.getElementById("next-button");
     const scoresDiv = document.getElementById("scores");
-    const playerChoicesDiv = document.getElementById("player-choices"); // 新增區域引用
+    const playerChoicesDiv = document.getElementById("player-choices");
+
+    // Adjust game container height dynamically for mobile devices
+    const adjustGameHeight = () => {
+      const game = document.getElementById("game");
+      game.style.height = `${window.innerHeight}px`;
+    };
+
+    window.addEventListener("resize", adjustGameHeight);
+    window.addEventListener("load", adjustGameHeight);
 
     let players = [];
     let scores = [];
@@ -252,7 +261,7 @@
         rightChoice.textContent = q.right;
         votesLeft.innerHTML = "";
         votesRight.innerHTML = "";
-        playerChoicesDiv.innerHTML = ""; // 清空選擇區域
+        playerChoicesDiv.innerHTML = "";
         gsap.fromTo(".choice", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.5 });
         playerVotes = [];
         result.style.display = "none";
@@ -313,7 +322,7 @@
         const player = players[playerVotes.length];
         playerVotes.push({ player, choice: "left" });
         addVoteSticker(player, "left");
-        updatePlayerChoices(); // 更新玩家選擇
+        updatePlayerChoices();
         if (playerVotes.length === players.length) calculateResult();
       }
     });
@@ -323,7 +332,7 @@
         const player = players[playerVotes.length];
         playerVotes.push({ player, choice: "right" });
         addVoteSticker(player, "right");
-        updatePlayerChoices(); // 更新玩家選擇
+        updatePlayerChoices();
         if (playerVotes.length === players.length) calculateResult();
       }
     });
